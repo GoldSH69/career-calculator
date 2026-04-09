@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경력년수 계산기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            font-size: 10pt;
+            background: #ffffff;
+            color: #333333;
+            min-height: 100vh;
+            padding: 24px 16px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 18pt;
+            font-weight: 700;
+            color: #5b7fa5;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888888;
+            font-size: 9pt;
+            margin-bottom: 24px;
+        }
+
+        /* 입력 영역 */
+        .input-section {
+            background: #f8fafc;
+            border: 1px solid #dfe6ed;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-section label {
+            display: block;
+            font-size: 10pt;
+            font-weight: 700;
+            color: #5b7fa5;
+            margin-bottom: 8px;
+        }
+
+        .hint {
+            font-size: 8.5pt;
+            color: #999999;
+            margin-bottom: 10px;
+            line-height: 1.7;
+        }
+
+        .hint code {
+            background: #eef2f7;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 8.5pt;
+            color: #7a8db0;
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: #ffffff;
+            border: 1px solid #cdd6e0;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Malgun Gothic', '맑은 고딕', monospace;
+            font-size: 9.5pt;
+            color: #333333;
+            resize: vertical;
+            line-height: 1.8;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #8bb0d4;
+            box-shadow: 0 0 0 2px rgba(139, 176, 212, 0.2);
+        }
+
+        textarea::placeholder {
+            color: #bbbbbb;
+        }
+
+        /* 버튼 */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .btn {
+            padding: 9px 22px;
+            border: none;
+            border-radius: 6px;
+            font-size: 9.5pt;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+        }
+
+        .btn-primary {
+            background: #8bb0d4;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #7aa3cb;
+            box-shadow: 0 2px 8px rgba(139, 176, 212, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e8edf2;
+            color: #666666;
+        }
+
+        .btn-secondary:hover {
+            background: #dce3ea;
+            color: #444444;
+        }
+
+        .btn-copy {
+            background: #a8d5ba;
+            color: #ffffff;
+        }
+
+        .btn-copy:hover {
+            background: #96ccab;
+            box-shadow: 0 2px 8px rgba(168, 213, 186, 0.4);
+        }
+
+        /* 결과 영역 */
+        .result-section {
+            background: #f8fafc;
+            border: 1px solid #dfe6ed;
+            border-radius: 10px;
+            padding: 20px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .result-header h2 {
+            font-size: 12pt;
+            color: #5b7fa5;
+            font-weight: 700;
+        }
+
+        /* 테이블 */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10pt;
+            table-layout: fixed;
+        }
+
+        .result-table thead th {
+            background: #e4ecf4;
+            color: #5b7fa5;
+            font-weight: 700;
+            padding: 10px 12px;
+            text-align: center;
+            border-bottom: 2px solid #c9d6e3;
+            white-space: nowrap;
+            font-size: 9.5pt;
+        }
+
+        .result-table thead th:first-child {
+            border-radius: 6px 0 0 0;
+        }
+
+        .result-table thead th:last-child {
+            border-radius: 0 6px 0 0;
+        }
+
+        /* 컬럼 너비 지정 */
+        .result-table .col-no {
+            width: 42px;
+        }
+
+        .result-table .col-date {
+            width: 130px;
+        }
+
+        .result-table .col-duration {
+            width: 110px;
+        }
+
+        .result-table .col-company {
+            /* 나머지 공간 자동 */
+        }
+
+        .result-table tbody td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #e8edf2;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 10pt;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .result-table tbody tr:hover {
+            background: #f0f5fa;
+        }
+
+        .result-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .result-table tbody .col-no {
+            color: #999999;
+        }
+
+        .result-table tbody .col-date {
+            white-space: nowrap;
+            font-family: 'Consolas', 'Malgun Gothic', monospace;
+            font-size: 9.5pt;
+        }
+
+        .result-table tbody .col-duration,
+        .result-table tfoot .col-duration {
+            white-space: nowrap;
+            font-weight: 700;
+            color: #7a6bbd;
+        }
+
+        .result-table tbody .col-company {
+            text-align: left;
+            color: #444444;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .current-tag {
+            display: inline-block;
+            background: #a8d5ba;
+            color: #ffffff;
+            font-size: 7.5pt;
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin-left: 4px;
+            font-weight: 600;
+            vertical-align: middle;
+        }
+
+        /* 합계 행 */
+        .result-table tfoot td {
+            padding: 12px 12px;
+            border-top: 2px solid #c9d6e3;
+            font-weight: 700;
+            text-align: center;
+            background: #edf2f8;
+            white-space: nowrap;
+        }
+
+        .result-table tfoot .total-label {
+            text-align: center;
+            font-size: 10pt;
+            color: #5b7fa5;
+        }
+
+        .result-table tfoot .total-duration {
+            font-size: 11pt;
+            color: #5b7fa5;
+        }
+
+        /* 에러 */
+        .error-msg {
+            background: #fef2f2;
+            border: 1px solid #f0c8c8;
+            color: #c07070;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 14px;
+            font-size: 9pt;
+            line-height: 1.6;
+        }
+
+        /* 토스트 */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #a8d5ba;
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 9.5pt;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 9999;
+            pointer-events: none;
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px 8px;
+            }
+            h1 {
+                font-size: 15pt;
+            }
+            .input-section, .result-section {
+                padding: 14px;
+            }
+            .result-table {
+                table-layout: auto;
+                font-size: 8.5pt;
+            }
+            .result-table thead th,
+            .result-table tbody td,
+            .result-table tfoot td {
+                padding: 7px 6px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 경력년수 계산기</h1>
+        <p class="subtitle">경력 사항을 붙여넣으면 자동으로 경력 기간을 계산합니다 (입사일: 1일 기준 / 퇴사일: 말일 기준)</p>
+
+        <!-- 입력 -->
+        <div class="input-section">
+            <label for="inputArea">경력 사항 입력</label>
+            <div class="hint">
+                아래와 같은 형식으로 붙여넣어 주세요.<br>
+                <code>2025년 10월 ~ 현 재직중 &nbsp; SI기업 / 컨설팅 / 팀장(상무)</code><br>
+                <code>2024년 07월 ~ 2025년 09월 &nbsp; ㈜AAAA / 연구소 / 연구소장(상무)</code><br>
+                "현재", "재직중", "현 재직중", "재직 중" 등의 표현을 인식합니다. &nbsp;|&nbsp; <b>Ctrl+Enter</b>로 바로 계산
+            </div>
+            <textarea id="inputArea" placeholder="여기에 경력 사항을 붙여넣으세요...
+
+예시:
+2025년 10월 ~ 현 재직중      SI기업 / 컨설팅팀 / 팀장(상무)
+2024년 07월 ~ 2025년 09월   ㈜AAAA / 연구소 / 연구소장(상무)
+2018년 08월 ~ 2024년 07월   ㈜BBBB / 개발사업부 / 사업부장(이사)"></textarea>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="calculate()">📊 경력 계산</button>
+                <button class="btn btn-secondary" onclick="loadSample()">📝 샘플 데이터</button>
+                <button class="btn btn-secondary" onclick="clearAll()">🗑️ 초기화</button>
+            </div>
+        </div>
+
+        <!-- 결과 -->
+        <div class="result-section" id="resultSection">
+            <div class="result-header">
+                <h2>📊 경력 산정 결과</h2>
+                <button class="btn btn-copy" onclick="copyResult()">📋 결과 복사</button>
+            </div>
+            <div id="errorArea"></div>
+            <div class="table-wrapper">
+                <table class="result-table" id="resultTable">
+                    <thead>
+                        <tr>
+                            <th class="col-no">No</th>
+                            <th class="col-date">입사일</th>
+                            <th class="col-date">퇴사일</th>
+                            <th class="col-duration">경력기간</th>
+                            <th class="col-company">소속 / 부서 / 직위</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody"></tbody>
+                    <tfoot id="resultFoot"></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">✅ 클립보드에 복사되었습니다</div>
+
+    <script>
+        /**
+         * 해당 월의 마지막 날짜
+         */
+        function getLastDayOfMonth(year, month) {
+            return new Date(year, month, 0).getDate();
+        }
+
+        /**
+         * 오늘 날짜를 YYYY-MM-DD 형식으로 반환
+         */
+        function getTodayStr() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        /**
+         * 오늘 날짜의 년, 월, 일
+         */
+        function getToday() {
+            const now = new Date();
+            return {
+                year: now.getFullYear(),
+                month: now.getMonth() + 1,
+                day: now.getDate()
+            };
+        }
+
+        /**
+         * 두 날짜(년월일) 사이의 차이를 년/월로 계산
+         * startDate: 입사일 (해당월 1일)
+         * endDate: 퇴사일 (해당월 말일 또는 오늘)
+         */
+        function calcDurationByDate(sy, sm, sd, ey, em, ed) {
+            let years = ey - sy;
+            let months = em - sm;
+            let days = ed - sd;
+
+            // 일수 보정: 퇴사일의 일이 입사일의 일보다 작으면 한 달 빼기
+            if (days < 0) {
+                months--;
+                // 이전 달의 마지막 날로 보정
+                const prevMonthDays = getLastDayOfMonth(ey, em);
+                days += prevMonthDays;
+            }
+
+            // 월수 보정
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            // 일수가 있으면 올림으로 +1개월 처리 (1일이라도 근무하면 해당 월 포함)
+            if (days > 0) {
+                months++;
+                if (months >= 12) {
+                    years++;
+                    months -= 12;
+                }
+            }
+
+            const totalMonths = years * 12 + months;
+
+            return { years, months, totalMonths };
+        }
+
+        /**
+         * 한 줄 파싱
+         */
+        function parseLine(line) {
+            line = line.trim();
+            if (!line) return null;
+
+            const tildeIdx = line.indexOf('~');
+            if (tildeIdx === -1) return null;
+
+            const leftPart = line.substring(0, tildeIdx).trim();
+            const rightPart = line.substring(tildeIdx + 1).trim();
+
+            // 입사년월
+            const startMatch = leftPart.match(/(\d{4})\s*년\s*(\d{1,2})\s*월/);
+            if (!startMatch) return null;
+
+            const startYear = parseInt(startMatch[1]);
+            const startMonth = parseInt(startMatch[2]);
+
+            // 퇴직년월
+            let endYear, endMonth, endDay;
+            let isCurrent = false;
+            let companyInfo = '';
+
+            const currentKeywords = /현\s*재직\s*중|재직\s*중|현\s*재|현재|재직중/;
+            const endDateMatch = rightPart.match(/(\d{4})\s*년\s*(\d{1,2})\s*월/);
+
+            if (endDateMatch) {
+                endYear = parseInt(endDateMatch[1]);
+                endMonth = parseInt(endDateMatch[2]);
+                endDay = getLastDayOfMonth(endYear, endMonth); // 말일
+                companyInfo = rightPart.substring(
+                    endDateMatch.index + endDateMatch[0].length
+                ).trim();
+            } else if (currentKeywords.test(rightPart)) {
+                isCurrent = true;
+                const today = getToday();
+                endYear = today.year;
+                endMonth = today.month;
+                endDay = today.day; // 오늘 날짜
+                companyInfo = rightPart.replace(currentKeywords, '').trim();
+            } else {
+                return null;
+            }
+
+            companyInfo = companyInfo.replace(/^[\s\t]+/, '').replace(/[\s\t]+$/, '');
+
+            return {
+                startYear, startMonth, startDay: 1,
+                endYear, endMonth, endDay,
+                isCurrent, companyInfo
+            };
+        }
+
+        /**
+         * 입사일 포맷: YYYY-MM-01
+         */
+        function formatStartDate(year, month) {
+            return `${year}-${String(month).padStart(2, '0')}-01`;
+        }
+
+        /**
+         * 퇴사일 포맷: YYYY-MM-DD
+         */
+        function formatEndDate(year, month, day) {
+            return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+
+        function formatDuration(years, months) {
+            return `${years}년 ${months}개월`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        /**
+         * 메인 계산
+         */
+        function calculate() {
+            const input = document.getElementById('inputArea').value;
+            const lines = input.split('\n');
+            const results = [];
+            const errors = [];
+
+            lines.forEach((line, idx) => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+
+                const parsed = parseLine(trimmed);
+                if (parsed) {
+                    results.push(parsed);
+                } else {
+                    errors.push(`${idx + 1}번째 줄을 파싱할 수 없습니다: "${trimmed}"`);
+                }
+            });
+
+            if (results.length === 0 && errors.length === 0) {
+                alert('입력된 데이터가 없습니다.');
+                return;
+            }
+
+            const section = document.getElementById('resultSection');
+            const errorArea = document.getElementById('errorArea');
+            const body = document.getElementById('resultBody');
+            const foot = document.getElementById('resultFoot');
+
+            section.classList.add('show');
+
+            // 에러
+            errorArea.innerHTML = errors.length > 0
+                ? `<div class="error-msg">⚠️ 일부 줄을 인식하지 못했습니다:<br>${errors.join('<br>')}</div>`
+                : '';
+
+            // 테이블
+            let bodyHtml = '';
+            let totalAllMonths = 0;
+
+            results.forEach((r, i) => {
+                const dur = calcDurationByDate(
+                    r.startYear, r.startMonth, r.startDay,
+                    r.endYear, r.endMonth, r.endDay
+                );
+                totalAllMonths += dur.totalMonths;
+
+                const startDateStr = formatStartDate(r.startYear, r.startMonth);
+                const endDateStr = formatEndDate(r.endYear, r.endMonth, r.endDay);
+
+                const endDisplay = r.isCurrent
+                    ? `${endDateStr}<span class="current-tag">현재</span>`
+                    : endDateStr;
+
+                bodyHtml += `
+                    <tr>
+                        <td class="col-no">${i + 1}</td>
+                        <td class="col-date">${startDateStr}</td>
+                        <td class="col-date">${endDisplay}</td>
+                        <td class="col-duration">${formatDuration(dur.years, dur.months)}</td>
+                        <td class="col-company">${escapeHtml(r.companyInfo)}</td>
+                    </tr>
+                `;
+            });
+
+            body.innerHTML = bodyHtml;
+
+            // 합계
+            const totalYears = Math.floor(totalAllMonths / 12);
+            const totalMonths = totalAllMonths % 12;
+
+            foot.innerHTML = `
+                <tr>
+                    <td colspan="3" class="total-label">전체 경력 합계</td>
+                    <td class="total-duration">${formatDuration(totalYears, totalMonths)}</td>
+                    <td></td>
+                </tr>
+            `;
+
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /**
+         * 샘플 데이터
+         */
+        function loadSample() {
+            document.getElementById('inputArea').value =
+`2025년 10월 ~ 현 재직중\t    SI기업 / 컨설팅 / 연구소장(상무)
+2024년 07월 ~ 2025년 09월\t ㈜XXXX / 연구소 / 연구소장(상무)
+2018년 08월 ~ 2024년 07월\t ㈜BBBBB / 사업부 / 사업부장(이사)
+2015년 06월 ~ 2018년 07월\t ㈜CCCCC / 개발팀 / 팀장(책임)
+
+        }
+
+        /**
+         * 초기화
+         */
+        function clearAll() {
+            document.getElementById('inputArea').value = '';
+            document.getElementById('resultSection').classList.remove('show');
+            document.getElementById('resultBody').innerHTML = '';
+            document.getElementById('resultFoot').innerHTML = '';
+            document.getElementById('errorArea').innerHTML = '';
+        }
+
+        /**
+         * 결과 복사
+         */
+        function copyResult() {
+            const table = document.getElementById('resultTable');
+            if (!table) return;
+
+            let text = '';
+            const rows = table.querySelectorAll('thead tr, tbody tr, tfoot tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('th, td');
+                const values = [];
+                cells.forEach(cell => {
+                    values.push(cell.textContent.replace(/\s+/g, ' ').trim());
+                });
+                text += values.join('\t') + '\n';
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast();
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast();
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // Ctrl+Enter 단축키
+        document.getElementById('inputArea').addEventListener('keydown', function (e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                calculate();
+            }
+        });
+    </script>
+</body>
+</html>
