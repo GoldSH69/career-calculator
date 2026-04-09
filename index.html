@@ -203,22 +203,9 @@
             border-radius: 0 6px 0 0;
         }
 
-        /* 컬럼 너비 지정 */
-        .result-table .col-no {
-            width: 42px;
-        }
-
-        .result-table .col-date {
-            width: 130px;
-        }
-
-        .result-table .col-duration {
-            width: 110px;
-        }
-
-        .result-table .col-company {
-            /* 나머지 공간 자동 */
-        }
+        .result-table .col-no { width: 42px; }
+        .result-table .col-date { width: 140px; }
+        .result-table .col-duration { width: 110px; }
 
         .result-table tbody td {
             padding: 9px 12px;
@@ -238,9 +225,7 @@
             border-bottom: none;
         }
 
-        .result-table tbody .col-no {
-            color: #999999;
-        }
+        .result-table tbody .col-no { color: #999999; }
 
         .result-table tbody .col-date {
             white-space: nowrap;
@@ -334,31 +319,15 @@
 
         /* 반응형 */
         @media (max-width: 768px) {
-            body {
-                padding: 12px 8px;
-            }
-            h1 {
-                font-size: 15pt;
-            }
-            .input-section, .result-section {
-                padding: 14px;
-            }
-            .result-table {
-                table-layout: auto;
-                font-size: 8.5pt;
-            }
+            body { padding: 12px 8px; }
+            h1 { font-size: 15pt; }
+            .input-section, .result-section { padding: 14px; }
+            .result-table { table-layout: auto; font-size: 8.5pt; }
             .result-table thead th,
             .result-table tbody td,
-            .result-table tfoot td {
-                padding: 7px 6px;
-            }
-            .btn-group {
-                flex-direction: column;
-            }
-            .btn {
-                width: 100%;
-                text-align: center;
-            }
+            .result-table tfoot td { padding: 7px 6px; }
+            .btn-group { flex-direction: column; }
+            .btn { width: 100%; text-align: center; }
         }
     </style>
 </head>
@@ -372,16 +341,18 @@
             <label for="inputArea">경력 사항 입력</label>
             <div class="hint">
                 아래와 같은 형식으로 붙여넣어 주세요.<br>
-                <code>2025년 10월 ~ 현 재직중 &nbsp; SI기업 / 컨설팅 / 팀장(상무)</code><br>
-                <code>2024년 07월 ~ 2025년 09월 &nbsp; ㈜AAAA / 연구소 / 연구소장(상무)</code><br>
-                "현재", "재직중", "현 재직중", "재직 중" 등의 표현을 인식합니다. &nbsp;|&nbsp; <b>Ctrl+Enter</b>로 바로 계산
+                <code>2025년 10월 ~ 현 재직중 &nbsp; SI기업 / 컨설팅 / 프리랜서</code><br>
+                <code>2024년 07월 ~ 2025년 09월 &nbsp; ㈜팬라이트 / 연구소 / 연구소장(상무)</code><br>
+                구분자: <code>~</code> <code>～</code> <code>-</code> <code>–</code> 모두 인식 &nbsp;|&nbsp;
+                "현재", "재직중", "현 재직중" 등 인식 &nbsp;|&nbsp;
+                <b>Ctrl+Enter</b>로 바로 계산
             </div>
             <textarea id="inputArea" placeholder="여기에 경력 사항을 붙여넣으세요...
 
 예시:
-2025년 10월 ~ 현 재직중      SI기업 / 컨설팅팀 / 팀장(상무)
-2024년 07월 ~ 2025년 09월   ㈜AAAA / 연구소 / 연구소장(상무)
-2018년 08월 ~ 2024년 07월   ㈜BBBB / 개발사업부 / 사업부장(이사)"></textarea>
+2025년 10월 ~ 현 재직중      SI기업 / 컨설팅 / 프리랜서
+2024년 07월 ~ 2025년 09월   ㈜팬라이트 / 연구소 / 연구소장(상무)
+2018년 08월 ~ 2024년 07월   ㈜덴티움 / 의료장비사업부 / 사업부장(이사)"></textarea>
             <div class="btn-group">
                 <button class="btn btn-primary" onclick="calculate()">📊 경력 계산</button>
                 <button class="btn btn-secondary" onclick="loadSample()">📝 샘플 데이터</button>
@@ -418,6 +389,27 @@
 
     <script>
         /**
+         * ==========================================
+         *  전처리: 입력 텍스트를 정규화
+         * ==========================================
+         * 다양한 구분자를 통일하고 불필요한 공백 정리
+         */
+        function normalizeLine(line) {
+            // 1. 앞뒤 공백/탭 제거
+            line = line.trim();
+
+            // 2. 모든 종류의 물결표/대시를 반각 ~ 로 통일
+            //    ~ (U+007E), ～ (U+FF5E 전각물결), 〜 (U+301C 파형대시)
+            //    – (U+2013 en-dash), — (U+2014 em-dash), ― (U+2015 수평선)
+            line = line.replace(/[～〜–—―]/g, '~');
+
+            // 3. 연속된 공백/탭을 공백 하나로
+            line = line.replace(/[\t ]+/g, ' ');
+
+            return line;
+        }
+
+        /**
          * 해당 월의 마지막 날짜
          */
         function getLastDayOfMonth(year, month) {
@@ -425,18 +417,7 @@
         }
 
         /**
-         * 오늘 날짜를 YYYY-MM-DD 형식으로 반환
-         */
-        function getTodayStr() {
-            const now = new Date();
-            const y = now.getFullYear();
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const d = String(now.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        }
-
-        /**
-         * 오늘 날짜의 년, 월, 일
+         * 오늘 날짜 정보
          */
         function getToday() {
             const now = new Date();
@@ -449,29 +430,24 @@
 
         /**
          * 두 날짜(년월일) 사이의 차이를 년/월로 계산
-         * startDate: 입사일 (해당월 1일)
-         * endDate: 퇴사일 (해당월 말일 또는 오늘)
          */
         function calcDurationByDate(sy, sm, sd, ey, em, ed) {
             let years = ey - sy;
             let months = em - sm;
             let days = ed - sd;
 
-            // 일수 보정: 퇴사일의 일이 입사일의 일보다 작으면 한 달 빼기
             if (days < 0) {
                 months--;
-                // 이전 달의 마지막 날로 보정
                 const prevMonthDays = getLastDayOfMonth(ey, em);
                 days += prevMonthDays;
             }
 
-            // 월수 보정
             if (months < 0) {
                 years--;
                 months += 12;
             }
 
-            // 일수가 있으면 올림으로 +1개월 처리 (1일이라도 근무하면 해당 월 포함)
+            // 1일이라도 근무하면 해당 월 포함
             if (days > 0) {
                 months++;
                 if (months >= 12) {
@@ -481,57 +457,79 @@
             }
 
             const totalMonths = years * 12 + months;
-
             return { years, months, totalMonths };
         }
 
         /**
-         * 한 줄 파싱
+         * ==========================================
+         *  한 줄 파싱 (강화된 버전)
+         * ==========================================
+         *
+         * 지원 형식:
+         *   2024년 07월 ~ 2025년 09월  ㈜팬라이트
+         *   2025년 10월 ~ 현 재직중    SI기업
+         *   2025년 10월 ~ 현재         SI기업
+         *   2025년 10월 ~ 재직중       SI기업
+         *
+         * 구분자: ~, ～, –, —, ― 모두 지원
+         * 앞뒤 탭/공백 무관
          */
-        function parseLine(line) {
-            line = line.trim();
+        function parseLine(rawLine) {
+            const line = normalizeLine(rawLine);
             if (!line) return null;
 
+            // ~ 찾기 (normalizeLine에서 이미 통일됨)
             const tildeIdx = line.indexOf('~');
             if (tildeIdx === -1) return null;
 
             const leftPart = line.substring(0, tildeIdx).trim();
             const rightPart = line.substring(tildeIdx + 1).trim();
 
-            // 입사년월
-            const startMatch = leftPart.match(/(\d{4})\s*년\s*(\d{1,2})\s*월/);
+            // ── 입사년월 파싱 ──
+            const datePattern = /(\d{4})\s*년\s*(\d{1,2})\s*월/;
+            const startMatch = leftPart.match(datePattern);
             if (!startMatch) return null;
 
             const startYear = parseInt(startMatch[1]);
             const startMonth = parseInt(startMatch[2]);
 
-            // 퇴직년월
+            // ── 퇴직년월 파싱 ──
             let endYear, endMonth, endDay;
             let isCurrent = false;
             let companyInfo = '';
 
+            // "현재/재직중" 키워드 (다양한 띄어쓰기 허용)
             const currentKeywords = /현\s*재직\s*중|재직\s*중|현\s*재|현재|재직중/;
-            const endDateMatch = rightPart.match(/(\d{4})\s*년\s*(\d{1,2})\s*월/);
+
+            const endDateMatch = rightPart.match(datePattern);
 
             if (endDateMatch) {
+                // ── 날짜가 있는 경우 ──
                 endYear = parseInt(endDateMatch[1]);
                 endMonth = parseInt(endDateMatch[2]);
                 endDay = getLastDayOfMonth(endYear, endMonth); // 말일
+
+                // 날짜 뒤의 텍스트 = 회사정보
                 companyInfo = rightPart.substring(
                     endDateMatch.index + endDateMatch[0].length
                 ).trim();
+
             } else if (currentKeywords.test(rightPart)) {
+                // ── "현 재직중" 등인 경우 → 오늘 날짜 ──
                 isCurrent = true;
                 const today = getToday();
                 endYear = today.year;
                 endMonth = today.month;
-                endDay = today.day; // 오늘 날짜
+                endDay = today.day;
+
                 companyInfo = rightPart.replace(currentKeywords, '').trim();
+
             } else {
                 return null;
             }
 
-            companyInfo = companyInfo.replace(/^[\s\t]+/, '').replace(/[\s\t]+$/, '');
+            // 회사정보 정리
+            companyInfo = companyInfo.replace(/^[\s\t,./]+/, '').replace(/[\s\t]+$/, '');
 
             return {
                 startYear, startMonth, startDay: 1,
@@ -541,16 +539,9 @@
         }
 
         /**
-         * 입사일 포맷: YYYY-MM-01
+         * 날짜 포맷
          */
-        function formatStartDate(year, month) {
-            return `${year}-${String(month).padStart(2, '0')}-01`;
-        }
-
-        /**
-         * 퇴사일 포맷: YYYY-MM-DD
-         */
-        function formatEndDate(year, month, day) {
+        function formatDate(year, month, day) {
             return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         }
 
@@ -565,7 +556,9 @@
         }
 
         /**
-         * 메인 계산
+         * ==========================================
+         *  메인: 계산
+         * ==========================================
          */
         function calculate() {
             const input = document.getElementById('inputArea').value;
@@ -575,13 +568,13 @@
 
             lines.forEach((line, idx) => {
                 const trimmed = line.trim();
-                if (!trimmed) return;
+                if (!trimmed) return; // 빈 줄 무시
 
                 const parsed = parseLine(trimmed);
                 if (parsed) {
                     results.push(parsed);
                 } else {
-                    errors.push(`${idx + 1}번째 줄을 파싱할 수 없습니다: "${trimmed}"`);
+                    errors.push(`${idx + 1}번째 줄 파싱 실패: "${trimmed}"`);
                 }
             });
 
@@ -599,7 +592,7 @@
 
             // 에러
             errorArea.innerHTML = errors.length > 0
-                ? `<div class="error-msg">⚠️ 일부 줄을 인식하지 못했습니다:<br>${errors.join('<br>')}</div>`
+                ? `<div class="error-msg">⚠️ 인식 실패:<br>${errors.join('<br>')}</div>`
                 : '';
 
             // 테이블
@@ -613,8 +606,8 @@
                 );
                 totalAllMonths += dur.totalMonths;
 
-                const startDateStr = formatStartDate(r.startYear, r.startMonth);
-                const endDateStr = formatEndDate(r.endYear, r.endMonth, r.endDay);
+                const startDateStr = formatDate(r.startYear, r.startMonth, 1);
+                const endDateStr = formatDate(r.endYear, r.endMonth, r.endDay);
 
                 const endDisplay = r.isCurrent
                     ? `${endDateStr}<span class="current-tag">현재</span>`
@@ -653,11 +646,13 @@
          */
         function loadSample() {
             document.getElementById('inputArea').value =
-`2025년 10월 ~ 현 재직중\t    SI기업 / 컨설팅 / 연구소장(상무)
-2024년 07월 ~ 2025년 09월\t ㈜XXXX / 연구소 / 연구소장(상무)
-2018년 08월 ~ 2024년 07월\t ㈜BBBBB / 사업부 / 사업부장(이사)
-2015년 06월 ~ 2018년 07월\t ㈜CCCCC / 개발팀 / 팀장(책임)
-
+`2025년 10월 ~ 현 재직중\t     SI기업 / 컨설팅 / 프리랜서
+2024년 07월 ~ 2025년 09월\t ㈜팬라이트 / 연구소 / 연구소장(상무)
+2018년 08월 ~ 2024년 07월\t ㈜덴티움 / 의료장비사업부 / 사업부장(이사)
+2015년 06월 ~ 2018년 07월\t ㈜동부대우전자 / 전장제어개발팀 / 팀장(책임연구원)
+2012년 07월 ~ 2015년 06월\t ㈜현대IHL / 전장회로개발팀 / 팀장(책임연구원)
+2008년 06월 ~ 2012년 06월\t ㈜삼성전자 / 전장개발팀 / 선임연구원
+2004년 12월 ~ 2008년 05월\t ㈜웅진코웨이 / 전장회로개발팀 / 1급연구원`;
         }
 
         /**
